@@ -1,0 +1,9 @@
+Package: contactsim
+Title: Simulate Disease Outbreaks with Contacts
+Version: 0.0.1
+Authors@R: person("Thibaut", "Jombar", email = "thibautjombart@gmail.com", role = c("aut", "cre"))
+Description: Simulate outbreaks with contact.
+Depends: R (>= 3.3.2)
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
