@@ -29,9 +29,25 @@
 #'
 #'
 #' @examples
+#' if (require(distcrete)) {
+#' ## get distributions
+#'  SI <- distcrete("gamma", 1L, w = 0, 10, 0.65)
+#'  d_contacts <- distcrete("exp", 1L, w=0, 0.05)
+#'
+#' ## simulate outbreak and contacts
+#'  set.seed(1)
+#'  x <- contact_outbreak(3, 1.8, SI$r, d_contacts$r)
+#'  x
+#'  plot(x)
+#' 
+#'  if (require(incidence)) {
+#'    plot(incidence(x$linelist$onset, 7))
+#'  }
+#' }
+#' 
 #' 
 contact_outbreak <- function(lambda, R, r_SI, r_contact,
-                             max_cases = 1e3) {
+                             max_cases = 100) {
     if (lambda < 0) {
         stop("lambda cannot be negative")
     }
@@ -44,8 +60,8 @@ contact_outbreak <- function(lambda, R, r_SI, r_contact,
     if (R > lambda) {
         stop("R cannot exceed lambda")
     }
-    if (!inherits(r_si, "function")) {
-        stop("r_si is not a function")
+    if (!inherits(r_SI, "function")) {
+        stop("r_SI is not a function")
     }
     if (!inherits(r_contact, "function")) {
         stop("r_contact is not a function")
@@ -122,11 +138,12 @@ contact_outbreak <- function(lambda, R, r_SI, r_contact,
         contacts_dates[!are_cases] <- r_contact(sum(!are_cases))
 
         ## contact leads to a new case
-        new_onsets <- i_onset + r_si(sum(are_cases))
+        new_onsets <- i_onset + r_SI(sum(are_cases))
         names(new_onsets) <- new_ids[are_cases]
-        contacts_dates[are_cases] <- as.integer(round(runif(sum(are_cases),
-                                                      min = i_onset,
-                                                      max = new_onsets)))
+        contacts_dates[are_cases] <- as.integer(
+            round(stats::runif(sum(are_cases),
+                               min = i_onset,
+                               max = new_onsets)))
         names(contacts_dates) <- new_ids
         
         ## store contact information
