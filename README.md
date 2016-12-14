@@ -4,17 +4,7 @@ output:
     keep_md: yes
 ---
 
-```{r, echo = FALSE, message=FALSE, results='hide'}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.width = 8,
-  fig.height = 6,
-  fig.path = "figs/",
-  echo = TRUE
-)
 
-```
 
 
 
@@ -25,7 +15,8 @@ knitr::opts_chunk$set(
 
 
 To benefit from the latest features and bug fixes, install the development, *github* version of the package using:
-```{r install2, eval=FALSE}
+
+```r
 devtools::install_github("thibautjombart/contactsim")
 ```
 
