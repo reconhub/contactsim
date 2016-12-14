@@ -38,7 +38,7 @@
 #'  set.seed(1)
 #'  x <- contact_outbreak(3, 1.8, SI$r, d_contacts$r)
 #'  x
-#'  plot(x)
+#'  plot(x, group = "case_def")
 #' 
 #'  if (require(incidence)) {
 #'    plot(incidence(x$linelist$onset, 7))
@@ -104,9 +104,10 @@ contact_outbreak <- function(lambda, R, r_SI, r_contact,
 
     ## for linelist
     out_ll <- list()
-    out_ll$case_id  <- 1L # ID of case
+    out_ll$id  <- 1L # ID of case
+    out_ll$case_def <- "confirmed"
     out_ll$onset  <- 0L # onset of symptom
-    names(out_ll$onset) <- out_ll$case_id
+    names(out_ll$onset) <- out_ll$id
     
     
     while (continue) {
@@ -122,12 +123,14 @@ contact_outbreak <- function(lambda, R, r_SI, r_contact,
         
         ## i) how many contacts?
         n_contacts <- stats::rpois(1L, lambda)
-        new_ids <- seq(max(1L, out_ct$to)+1, length.out = n_contacts)
+        new_ids <- seq(max(out_ll$id) + 1, length.out = n_contacts)
 
         ## ii) are contacts leading to new cases?
         are_cases <- sample(c(TRUE, FALSE), n_contacts, replace = TRUE,
                             prob = c(Rc, 1 - Rc))
         new_cases <- c(new_cases, new_ids[are_cases])
+        new_def <- rep("non-case", n_contacts)
+        new_def[are_cases] <- "confirmed"
         
         ## iii) when does this happen?
         ## note: the date of onset of 'i' serves as a basis 
@@ -138,12 +141,13 @@ contact_outbreak <- function(lambda, R, r_SI, r_contact,
         contacts_dates[!are_cases] <- r_contact(sum(!are_cases))
 
         ## contact leads to a new case
-        new_onsets <- i_onset + r_SI(sum(are_cases))
-        names(new_onsets) <- new_ids[are_cases]
+        new_onsets <- rep(NA_integer_, n_contacts)
+        new_onsets[are_cases] <- i_onset + r_SI(sum(are_cases))
+        names(new_onsets) <- new_ids
         contacts_dates[are_cases] <- as.integer(
             round(stats::runif(sum(are_cases),
                                min = i_onset,
-                               max = new_onsets)))
+                               max = new_onsets[are_cases])))
         names(contacts_dates) <- new_ids
         
         ## store contact information
@@ -153,13 +157,14 @@ contact_outbreak <- function(lambda, R, r_SI, r_contact,
         out_ct$dates <- c(out_ct$dates, contacts_dates)
 
         ## store cases in linelist
-        out_ll$case_id  <- c(out_ll$case_id, new_ids[are_cases])
+        out_ll$id  <- c(out_ll$id, new_ids)
+        out_ll$case_def <- c(out_ll$case_def, new_def)
         out_ll$onset  <- c(out_ll$onset, new_onsets)
 
 
         ## exit conditions: exceed maximum number of cases, or no new
         ## infectious cases left
-        n_cases <- length(out_ll$case_id)
+        n_cases <- sum(out_ll$case_def == "confirmed")
         continue <- (n_cases <= max_cases) && (length(new_cases) > 0)
         
     }
@@ -168,7 +173,7 @@ contact_outbreak <- function(lambda, R, r_SI, r_contact,
     ## implemented in the epicontacts package; the loop above will classically
     ## overshoot the maximum number of cases, so we need to prune the resulting
     ## object to make sure there is not more cases than requested.
-    
+
     out_ct <- data.frame(out_ct)
     out_ll <- data.frame(out_ll)
 
@@ -176,17 +181,17 @@ contact_outbreak <- function(lambda, R, r_SI, r_contact,
                                          contacts = out_ct,
                                          directed = TRUE)
 
-    ## remove excess cases in linelist
-    out <- out[i = seq_len(max_cases)]
+    ## ## remove excess cases in linelist
+    ## out <- out[i = seq_len(max_cases)]
 
-    ## remove corresponding contacts
-    id_linelist <- epicontacts::get_id(out, "linelist")
+    ## ## remove corresponding contacts
+    ## id_linelist <- epicontacts::get_id(out, "linelist")
     
-    ct_to_keep <- (!out$contacts$infectious) |
-        (out$contacts$from %in% id_linelist) |
-            (out$contacts$to %in% id_linelist)
+    ## ct_to_keep <- (!out$contacts$infectious) |
+    ##     (out$contacts$from %in% id_linelist) |
+    ##         (out$contacts$to %in% id_linelist)
  
-    out <- out[j = ct_to_keep]
+    ## out <- out[j = ct_to_keep]
    
     return(out)
     

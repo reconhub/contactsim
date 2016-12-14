@@ -41,7 +41,7 @@ if (require(distcrete)) {
  set.seed(1)
  x <- contact_outbreak(3, 1.8, SI$r, d_contacts$r)
  x
- plot(x)
+ plot(x, group = "case_def")
 
  if (require(incidence)) {
    plot(incidence(x$linelist$onset, 7))
